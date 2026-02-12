@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+{% set title = "Главная" %}
+{% block content %}
+
+<section class="hero">
+  <div class="container">
+    {% if is_404 %}
+      <div class="kicker reveal">Не нашли страницу • 404</div>
+      <h1 class="hero-title reveal">Кажется, здесь пусто.</h1>
+      <p class="hero-subtitle reveal">Но у нас есть шаблоны и типовые задания — вернёмся на главную.</p>
+    {% else %}
+      <div class="kicker reveal">ЕГЭ по информатике • быстро • чисто • по делу</div>
+      <h1 class="hero-title reveal">Готовься по опорным шаблонам и типовым задачам.</h1>
+      <p class="hero-subtitle reveal">
+        «По шаблону !» — мини-платформа: берёшь правильный каркас решения, тренируешься на типовых задачах, сохраняешь код и возвращаешься позже.
+      </p>
+    {% endif %}
+
+    <div class="hero-grid">
+      <div>
+        <div class="hero-cta reveal">
+          <a class="btn btn-primary" href="{{ url_for('templates_page') }}">
+            Открыть шаблоны <span aria-hidden="true">→</span>
+          </a>
+          <a class="btn" href="{{ url_for('tasks_page') }}">
+            Перейти к заданиям <span aria-hidden="true">→</span>
+          </a>
+        </div>
+
+        <hr class="hr reveal" />
+
+        <div class="reveal">
+          <h2 class="section-title" style="margin-top:0;">Как пользоваться</h2>
+          <div class="grid cards">
+            <div class="card">
+              <h3 class="card-title">1) Выбери номер</h3>
+              <p class="card-text">Открой нужное задание: сначала шаблон, затем — практика.</p>
+            </div>
+            <div class="card">
+              <h3 class="card-title">2) Возьми каркас</h3>
+              <p class="card-text">Шаблон экономит время и снижает число ошибок в логике.</p>
+            </div>
+            <div class="card">
+              <h3 class="card-title">3) Решай и сохраняй</h3>
+              <p class="card-text">Сохраняй решения в браузере и возвращайся к ним позже.</p>
+            </div>
+          </div>
+        </div>
+
+        <hr class="hr reveal" />
+
+        <div class="reveal">
+          <h2 class="section-title" style="margin-top:0;">Почему это удобно</h2>
+          <div class="grid cards">
+            <div class="card">
+              <h3 class="card-title">Минимализм</h3>
+              <p class="card-text">Ничего лишнего: быстрые страницы, чистая сетка, правильные акценты.</p>
+            </div>
+            <div class="card">
+              <h3 class="card-title">Прогресс</h3>
+              <p class="card-text">На странице заданий видно, что уже сохранено (localStorage).</p>
+            </div>
+            <div class="card">
+              <h3 class="card-title">Редактор как в IDE</h3>
+              <p class="card-text">CodeMirror с подсветкой Python (и fallback на textarea).</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <aside class="hero-panel reveal" aria-label="Сводка">
+        <div class="stat-grid">
+          <div class="stat">
+            <div class="stat-num">{{ templates_count }}</div>
+            <div class="stat-label">шаблона (демо)</div>
+          </div>
+          <div class="stat">
+            <div class="stat-num">{{ tasks_count }}</div>
+            <div class="stat-label">номера с задачами</div>
+          </div>
+        </div>
+
+        <hr class="hr" />
+
+        <div class="badge">⚡ Flask + Jinja2</div>
+        <div style="height:10px"></div>
+        <div class="badge">🌓 Тема сохраняется</div>
+        <div style="height:10px"></div>
+        <div class="badge">🧠 Учёба по каркасу</div>
+
+        <div style="height:16px"></div>
+
+        <a class="btn btn-ghost" href="{{ url_for('templates_page') }}" style="width:100%;">
+          Начать с шаблонов
+        </a>
+      </aside>
+    </div>
+  </div>
+</section>
+
+{% endblock %}

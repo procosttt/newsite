@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% set title = "Задания" %}
+{% block content %}
+
+<section class="section">
+  <div class="container">
+    <div class="list-head reveal">
+      <div>
+        <div class="kicker">Раздел • Задания</div>
+        <h1 class="section-title">Задания по номерам</h1>
+        <p class="section-subtitle">Открой номер, выбери типовую задачу и решай прямо на странице. Прогресс хранится локально.</p>
+      </div>
+
+      <div class="searchbar">
+        <input
+          type="text"
+          placeholder="Поиск: 6, строки, цифры..."
+          data-search-input
+          aria-label="Поиск по заданиям"
+        />
+        <div class="hint">Поиск по номеру и названию</div>
+      </div>
+    </div>
+
+    <div class="grid cards reveal">
+      {% for t in items %}
+        {% set pids = [] %}
+        {% for p in t.problems %}
+          {% set _ = pids.append(p.id) %}
+        {% endfor %}
+
+        <a class="card"
+           href="{{ url_for('task_detail', id=t.id) }}"
+           data-search-card
+           data-search-hay="Задание {{ t.id }} {{ t.title }}"
+        >
+          <div data-progress-holder data-task-id="{{ t.id }}" data-problem-ids="{{ pids | join(',') }}"
+               style="display:flex; align-items:flex-start; justify-content:space-between; gap:12px; flex-wrap:wrap;">
+            <div>
+              <h3 class="card-title">Задание №{{ t.id }}</h3>
+              <p class="card-text">{{ t.title }}</p>
+            </div>
+            <span class="badge" data-progress-badge>Прогресс: …</span>
+          </div>
+        </a>
+      {% endfor %}
+
+      <div class="card" data-search-empty style="display:none;">
+        <h3 class="card-title">Ничего не найдено</h3>
+        <p class="card-text">Попробуй “23”, “динамика”, “цифры”, “строки”.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+{% endblock %}

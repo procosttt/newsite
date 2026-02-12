@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% set title = "Шаблоны" %}
+{% block content %}
+
+<section class="section">
+  <div class="container">
+    <div class="list-head reveal">
+      <div>
+        <div class="kicker">Раздел • Шаблоны</div>
+        <h1 class="section-title">Шаблоны по номерам</h1>
+        <p class="section-subtitle">Выбери номер задания и возьми аккуратный каркас решения на Python.</p>
+      </div>
+
+      <div class="searchbar">
+        <input
+          type="text"
+          placeholder="Поиск: 6, строки, динамика..."
+          data-search-input
+          aria-label="Поиск по шаблонам"
+        />
+        <div class="hint">Поддерживается поиск по номеру и названию</div>
+      </div>
+    </div>
+
+    <div class="grid cards reveal">
+      {% for t in items %}
+        <a class="card"
+           href="{{ url_for('template_detail', id=t.id) }}"
+           data-search-card
+           data-search-hay="Задание {{ t.id }} {{ t.title }}"
+        >
+          <h3 class="card-title">Задание №{{ t.id }}</h3>
+          <p class="card-text">{{ t.title }}</p>
+        </a>
+      {% endfor %}
+
+      <div class="card" data-search-empty style="display:none;">
+        <h3 class="card-title">Ничего не найдено</h3>
+        <p class="card-text">Попробуй другой запрос (например: “14”, “цифры”, “dp”).</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+{% endblock %}

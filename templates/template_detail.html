@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% set title = "Шаблон №" ~ item.id %}
+{% block content %}
+
+<section class="section">
+  <div class="container">
+    <div class="breadcrumbs reveal">
+      <a href="{{ url_for('home') }}">Главная</a>
+      <span>›</span>
+      <a href="{{ url_for('templates_page') }}">Шаблоны</a>
+      <span>›</span>
+      <span>№{{ item.id }}</span>
+    </div>
+
+    <div class="reveal" style="margin-top:14px;">
+      <div class="kicker">Шаблон • Python</div>
+      <h1 class="section-title">Задание №{{ item.id }}</h1>
+      <p class="section-subtitle">{{ item.description }}</p>
+    </div>
+
+    <div class="reveal" style="margin-top:18px;">
+      <div class="code-block">
+        <pre><code data-template-code>{{ item.code }}</code></pre>
+      </div>
+
+      <div class="code-toolbar">
+        <button class="btn btn-primary" type="button" data-copy-template>Скопировать код</button>
+        <a class="btn" href="{{ url_for('templates_page') }}">Назад к шаблонам</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+{% endblock %}

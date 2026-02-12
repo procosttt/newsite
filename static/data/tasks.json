@@ -1,0 +1,82 @@
+{
+  "tasks": [
+    {
+      "id": 6,
+      "title": "Задание №6 — Строки",
+      "intro": "Тренировка базовой обработки строк: подсчёт, поиск, фильтрация символов. В ЕГЭ важно аккуратно читать условие и не путать «индекс» и «количество».",
+      "defaultCode": "s = input().strip()\\n\\n# TODO\\nprint()\\n",
+      "problems": [
+        {
+          "id": "p1",
+          "title": "6.1 — Сколько раз встречается подстрока",
+          "statement": "Ввод: строка s.\\nВыведите, сколько раз в строке встречается подстрока 'aba' (пересечения допускаются).\\n\\nПример: 'ababa' → 2 (позиции 0..2 и 2..4).",
+          "starterCode": "s = input().strip()\\n\\nsub = 'aba'\\nans = 0\\nfor i in range(0, len(s) - len(sub) + 1):\\n    if s[i:i+len(sub)] == sub:\\n        ans += 1\\nprint(ans)\\n"
+        },
+        {
+          "id": "p2",
+          "title": "6.2 — Первый и последний индекс",
+          "statement": "Ввод: строка s.\\nЕсли символ 'x' встречается в строке, выведите два числа: индекс первого и индекс последнего вхождения 'x'.\\nЕсли 'x' не встречается — выведите -1.",
+          "starterCode": "s = input().strip()\\n\\nif 'x' not in s:\\n    print(-1)\\nelse:\\n    print(s.find('x'), s.rfind('x'))\\n"
+        },
+        {
+          "id": "p3",
+          "title": "6.3 — Фильтрация (оставить только цифры)",
+          "statement": "Ввод: строка s.\\nВыведите строку, состоящую только из цифр исходной строки (в том же порядке).\\nЕсли цифр нет — выведите пустую строку.",
+          "starterCode": "s = input()\\n\\nout = []\\nfor ch in s:\\n    if ch.isdigit():\\n        out.append(ch)\\nprint(''.join(out))\\n"
+        }
+      ]
+    },
+    {
+      "id": 14,
+      "title": "Задание №14 — Числа и цифры",
+      "intro": "Задачи на цифры числа: сумма/произведение, свойства, количество цифр. Почти всегда можно решить через str(abs(n)) и генераторы.",
+      "defaultCode": "n = int(input())\\n\\n# TODO\\nprint()\\n",
+      "problems": [
+        {
+          "id": "p1",
+          "title": "14.1 — Сумма цифр",
+          "statement": "Ввод: целое число n.\\nВыведите сумму его цифр.\\nУчитывайте, что n может быть отрицательным.",
+          "starterCode": "n = int(input())\\n\\nprint(sum(map(int, str(abs(n)))))\\n"
+        },
+        {
+          "id": "p2",
+          "title": "14.2 — Количество цифр, кратных 3",
+          "statement": "Ввод: целое число n.\\nВыведите количество цифр в десятичной записи числа, которые кратны 3 (0 тоже кратно 3).",
+          "starterCode": "n = int(input())\\n\\ndigits = map(int, str(abs(n)))\\nans = sum(1 for d in digits if d % 3 == 0)\\nprint(ans)\\n"
+        },
+        {
+          "id": "p3",
+          "title": "14.3 — Проверка: все цифры разные",
+          "statement": "Ввод: целое число n.\\nВыведите YES, если все цифры в его десятичной записи различны, иначе NO.\\nПример: 1203 → YES, 202 → NO.",
+          "starterCode": "n = int(input())\\n\\ns = str(abs(n))\\nprint('YES' if len(set(s)) == len(s) else 'NO')\\n"
+        }
+      ]
+    },
+    {
+      "id": 23,
+      "title": "Задание №23 — Динамика (демо)",
+      "intro": "Мини-набор на dp: количество программ (способов) и минимальные шаги. Отлично тренирует формулировку dp-смысла и переходов.",
+      "defaultCode": "target = int(input())\\n\\n# TODO\\nprint()\\n",
+      "problems": [
+        {
+          "id": "p1",
+          "title": "23.1 — Количество программ (+1, +2)",
+          "statement": "Ввод: целое target (0 ≤ target ≤ 1000).\\nИз 0 нужно попасть в target. За один шаг можно прибавить 1 или 2.\\nВыведите количество различных программ (способов).",
+          "starterCode": "target = int(input())\\n\\ndp = [0] * (target + 1)\\ndp[0] = 1\\nfor i in range(1, target + 1):\\n    dp[i] = dp[i - 1]\\n    if i - 2 >= 0:\\n        dp[i] += dp[i - 2]\\nprint(dp[target])\\n"
+        },
+        {
+          "id": "p2",
+          "title": "23.2 — Количество программ (+1, *2) из 1",
+          "statement": "Ввод: целое target (1 ≤ target ≤ 10^5).\\nИз 1 нужно попасть в target. За шаг можно: прибавить 1 или умножить на 2 (не превышая target).\\nВыведите количество программ.",
+          "starterCode": "target = int(input())\\n\\ndp = [0] * (target + 1)\\ndp[1] = 1\\nfor x in range(1, target + 1):\\n    if dp[x] == 0:\\n        continue\\n    if x + 1 <= target:\\n        dp[x + 1] += dp[x]\\n    if x * 2 <= target:\\n        dp[x * 2] += dp[x]\\nprint(dp[target])\\n"
+        },
+        {
+          "id": "p3",
+          "title": "23.3 — Минимум шагов (+1, +3)",
+          "statement": "Ввод: целое target (0 ≤ target ≤ 10^5).\\nИз 0 попасть в target, за шаг можно прибавить 1 или 3.\\nВыведите минимальное число шагов.",
+          "starterCode": "target = int(input())\\n\\nINF = 10**9\\ndp = [INF] * (target + 1)\\ndp[0] = 0\\nfor i in range(1, target + 1):\\n    dp[i] = min(dp[i], dp[i - 1] + 1)\\n    if i - 3 >= 0:\\n        dp[i] = min(dp[i], dp[i - 3] + 1)\\nprint(dp[target])\\n"
+        }
+      ]
+    }
+  ]
+}

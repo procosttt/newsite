@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% set title = "Задания №" ~ item.id %}
+{% block content %}
+
+<section class="section">
+  <div class="container">
+    <div class="breadcrumbs reveal">
+      <a href="{{ url_for('home') }}">Главная</a>
+      <span>›</span>
+      <a href="{{ url_for('tasks_page') }}">Задания</a>
+      <span>›</span>
+      <span>№{{ item.id }}</span>
+    </div>
+
+    <div class="reveal" style="margin-top:14px;">
+      <div class="kicker">Задания • Практика</div>
+      <h1 class="section-title">Задание №{{ item.id }}</h1>
+      <p class="section-subtitle">{{ item.intro }}</p>
+    </div>
+
+    <hr class="hr reveal" />
+
+    <div class="grid reveal" style="gap:16px;">
+      {% for p in item.problems %}
+        {% set starter = p.starterCode if p.starterCode else item.defaultCode %}
+        <article class="card">
+          <div style="display:flex; align-items:flex-start; justify-content:space-between; gap: 12px; flex-wrap: wrap;">
+            <div>
+              <h2 class="card-title" style="font-size:18px; margin-bottom:6px;">{{ p.title }}</h2>
+              <p class="card-text" style="max-width: 90ch; white-space: pre-line;">{{ p.statement }}</p>
+            </div>
+            <span class="badge" data-saved-badge>…</span>
+          </div>
+
+          <div style="height:14px"></div>
+
+          <div
+            class="editor-shell"
+            data-editor-shell
+            data-task-id="{{ item.id }}"
+            data-problem-id="{{ p.id }}"
+          >
+            <!-- НАДЁЖНО: стартовый код лежит текстом, не в атрибуте -->
+            <textarea data-starter-source style="display:none;">{{ starter }}</textarea>
+
+            <div class="editor-meta">
+              <div class="hint">Python • Таб = отступ • Сохранение в браузере</div>
+              <div class="badge">localStorage</div>
+            </div>
+
+            <div data-cm-host></div>
+            <textarea class="editor-fallback" data-fallback spellcheck="false"></textarea>
+
+            <div class="editor-actions">
+              <button class="btn btn-primary" type="button" data-action="save">Сохранить</button>
+              <button class="btn btn-danger" type="button" data-action="reset">Сбросить</button>
+              <button class="btn" type="button" data-action="copy">Копировать</button>
+            </div>
+          </div>
+        </article>
+      {% endfor %}
+    </div>
+
+    <div class="reveal" style="margin-top:18px;">
+      <a class="btn" href="{{ url_for('tasks_page') }}">← Назад к списку заданий</a>
+    </div>
+  </div>
+</section>
+
+{% endblock %}
