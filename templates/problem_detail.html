@@ -50,33 +50,15 @@
         <div data-cm-host></div>
         <textarea class="editor-fallback" data-fallback spellcheck="false"></textarea>
 
+        <!-- Sticky actions on mobile -->
         <div class="editor-actions">
           <button class="btn btn-primary" type="button" data-action="save">Сохранить</button>
           <button class="btn btn-danger" type="button" data-action="reset">Сбросить</button>
           <button class="btn" type="button" data-action="copy">Копировать</button>
 
-          {% if runner_enabled %}
-            <button class="btn btn-ghost" type="button" data-action="run">Проверить</button>
-          {% endif %}
+          <button class="btn btn-ghost" type="button" data-action="fullscreen">Развернуть</button>
+          <button class="btn btn-ghost exit-full" type="button" data-action="exit-fullscreen">Свернуть</button>
         </div>
-
-        {% if runner_enabled %}
-          <div class="run-panel" data-run-panel>
-            <div class="run-head">
-              <div class="badge">Проверка по тестам</div>
-              <div class="hint">Сравнение stdout с ожидаемым выводом</div>
-            </div>
-            <div class="run-body">
-              <div class="run-status" data-run-status>Нажми “Проверить”, чтобы запустить тесты.</div>
-              <div class="run-results" data-run-results></div>
-            </div>
-
-            <!-- тесты пробрасываем в JSON в data-атрибуте безопасно -->
-            <script type="application/json" data-tests-json>
-              {{ tests | tojson }}
-            </script>
-          </div>
-        {% endif %}
       </div>
     </article>
 

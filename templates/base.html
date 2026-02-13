@@ -1,48 +1,68 @@
 <!doctype html>
-<html lang="ru" data-theme="light">
+<html lang="ru" data-theme="dark">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <meta name="color-scheme" content="light dark" />
-  <title>{{ site_name }}{% if title %} — {{ title }}{% endif %}</title>
-
-  <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='img/favicon.svg') }}" />
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap&subset=cyrillic&display=swap" rel="stylesheet" />
-
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
-
-  <script>
-    (function(){
-      try{
-        const t = localStorage.getItem('ps_theme');
-        if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t);
-      }catch(e){}
-    })();
-  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>{% if title %}{{ title }} — {% endif %}{{ site_name }}</title>
+  <meta name="description" content="По шаблону ! — мини-платформа для подготовки к ЕГЭ по информатике: шаблоны и задания с редактором Python." />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
+
 <body>
   <header class="header">
     <div class="container header-inner">
-      <a class="brand" href="{{ url_for('home') }}" aria-label="{{ site_name }}">
+      <a class="brand" href="{{ url_for('home') }}">
         <span class="brand-badge">!</span>
         <span class="brand-text">{{ site_name }}</span>
       </a>
 
-      <nav class="nav" aria-label="Основная навигация">
-        <a data-nav-link href="{{ url_for('home') }}">Главная</a>
-        <a data-nav-link href="{{ url_for('templates_page') }}">Шаблоны</a>
-        <a data-nav-link href="{{ url_for('tasks_page') }}">Задания</a>
+      <!-- Desktop nav -->
+      <nav class="nav nav-desktop">
+        <a href="{{ url_for('home') }}" class="{% if request.path == '/' %}active{% endif %}">Главная</a>
+        <a href="{{ url_for('templates_page') }}" class="{% if request.path.startswith('/templates') %}active{% endif %}">Шаблоны</a>
+        <a href="{{ url_for('tasks_page') }}" class="{% if request.path.startswith('/tasks') %}active{% endif %}">Задания</a>
       </nav>
 
       <div class="header-actions">
-        <button class="icon-btn" type="button" data-theme-toggle aria-label="Переключить тему" title="Переключить тему">
-          <span class="theme-dot" aria-hidden="true"></span>
+        <!-- Mobile menu button -->
+        <button class="icon-btn menu-btn" type="button" aria-label="Открыть меню" data-menu-open>
+          <span class="menu-icon" aria-hidden="true"></span>
+        </button>
+
+        <!-- Theme toggle -->
+        <button class="icon-btn" type="button" aria-label="Переключить тему" data-theme-toggle>
+          <span class="theme-dot"></span>
         </button>
       </div>
     </div>
   </header>
+
+  <!-- Mobile drawer -->
+  <div class="drawer-backdrop" data-menu-backdrop hidden></div>
+  <aside class="drawer" data-menu-drawer aria-hidden="true">
+    <div class="drawer-head">
+      <div class="brand" style="gap:10px;">
+        <span class="brand-badge">!</span>
+        <span class="brand-text">{{ site_name }}</span>
+      </div>
+      <button class="icon-btn" type="button" aria-label="Закрыть меню" data-menu-close>
+        ✕
+      </button>
+    </div>
+
+    <nav class="drawer-nav">
+      <a href="{{ url_for('home') }}" class="{% if request.path == '/' %}active{% endif %}">Главная</a>
+      <a href="{{ url_for('templates_page') }}" class="{% if request.path.startswith('/templates') %}active{% endif %}">Шаблоны</a>
+      <a href="{{ url_for('tasks_page') }}" class="{% if request.path.startswith('/tasks') %}active{% endif %}">Задания</a>
+    </nav>
+
+    <div class="drawer-foot">
+      <div class="badge">Совет: для кода жми “Развернуть”</div>
+    </div>
+  </aside>
 
   <main>
     {% block content %}{% endblock %}
@@ -51,15 +71,15 @@
   <footer class="footer">
     <div class="container footer-grid">
       <div>© {{ site_name }} • Мини-платформа для ЕГЭ по информатике</div>
-      <div>
+      <div style="display:flex; gap:10px; flex-wrap:wrap;">
         <a class="small-link" href="{{ url_for('templates_page') }}">Шаблоны</a>
-        ·
+        <span>•</span>
         <a class="small-link" href="{{ url_for('tasks_page') }}">Задания</a>
       </div>
     </div>
   </footer>
 
-  <script src="{{ url_for('static', filename='js/main.js') }}" defer></script>
-  <script src="{{ url_for('static', filename='js/editor.js') }}" defer></script>
+  <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/editor.js') }}"></script>
 </body>
 </html>
