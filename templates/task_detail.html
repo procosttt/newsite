@@ -20,44 +20,26 @@
 
     <hr class="hr reveal" />
 
-    <div class="grid reveal" style="gap:16px;">
+    <div class="grid reveal" style="gap:14px;">
       {% for p in item.problems %}
-        {% set starter = p.starterCode if p.starterCode else item.defaultCode %}
-        <article class="card">
-          <div style="display:flex; align-items:flex-start; justify-content:space-between; gap: 12px; flex-wrap: wrap;">
+        <a class="card"
+           href="{{ url_for('problem_detail', task_id=item.id, problem_id=p.id) }}"
+           data-search-card
+           data-search-hay="{{ p.title }}"
+        >
+          <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:12px; flex-wrap:wrap;">
             <div>
               <h2 class="card-title" style="font-size:18px; margin-bottom:6px;">{{ p.title }}</h2>
-              <p class="card-text" style="max-width: 90ch; white-space: pre-line;">{{ p.statement }}</p>
+              <p class="card-text" style="white-space: pre-line;">{{ p.statement }}</p>
             </div>
-            <span class="badge" data-saved-badge>…</span>
+
+            <!-- прогресс (сохранено/нет) по localStorage -->
+            <span class="badge" data-problem-saved data-task-id="{{ item.id }}" data-problem-id="{{ p.id }}">…</span>
           </div>
 
-          <div style="height:14px"></div>
-
-          <div
-            class="editor-shell"
-            data-editor-shell
-            data-task-id="{{ item.id }}"
-            data-problem-id="{{ p.id }}"
-          >
-            <!-- НАДЁЖНО: стартовый код лежит текстом, не в атрибуте -->
-            <textarea data-starter-source style="display:none;">{{ starter }}</textarea>
-
-            <div class="editor-meta">
-              <div class="hint">Python • Таб = отступ • Сохранение в браузере</div>
-              <div class="badge">localStorage</div>
-            </div>
-
-            <div data-cm-host></div>
-            <textarea class="editor-fallback" data-fallback spellcheck="false"></textarea>
-
-            <div class="editor-actions">
-              <button class="btn btn-primary" type="button" data-action="save">Сохранить</button>
-              <button class="btn btn-danger" type="button" data-action="reset">Сбросить</button>
-              <button class="btn" type="button" data-action="copy">Копировать</button>
-            </div>
-          </div>
-        </article>
+          <div style="height:10px"></div>
+          <div class="badge">Открыть решение →</div>
+        </a>
       {% endfor %}
     </div>
 
@@ -66,5 +48,23 @@
     </div>
   </div>
 </section>
+
+<script>
+  // маленькая проверка “сохранено/нет” на списке задач номера
+  (function(){
+    const prefix = "ps_code_task_";
+    const els = document.querySelectorAll("[data-problem-saved]");
+    els.forEach(el => {
+      const taskId = el.getAttribute("data-task-id");
+      const pid = el.getAttribute("data-problem-id");
+      const key = `${prefix}${taskId}_${pid}`;
+      const v = localStorage.getItem(key);
+      const saved = v !== null && String(v).trim() !== "";
+      el.textContent = saved ? "Сохранено" : "Не сохранено";
+      el.classList.toggle("ok", saved);
+      el.classList.toggle("warn", !saved);
+    });
+  })();
+</script>
 
 {% endblock %}

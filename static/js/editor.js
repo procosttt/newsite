@@ -39,12 +39,19 @@
     localStorage.removeItem(makeKey(taskId, problemId));
   }
 
+  // ✅ бейдж “Сохранено/Не сохранено” может быть не внутри editor-shell — ищем ближе к карточке
   function setSavedBadge(shell, isSaved) {
-    const b = shell.querySelector("[data-saved-badge]");
+    const card = shell.closest(".card") || shell.parentElement;
+    const b = (card && card.querySelector("[data-saved-badge]")) || shell.querySelector("[data-saved-badge]");
     if (!b) return;
     b.textContent = isSaved ? "Сохранено" : "Не сохранено";
     b.classList.toggle("ok", isSaved);
     b.classList.toggle("warn", !isSaved);
+  }
+
+  function normalizeText(s) {
+    // нормализуем переносы + убираем возможный первый \n из-за форматирования шаблона
+    return String(s || "").replace(/\r\n/g, "\n").replace(/^\n/, "");
   }
 
   async function initCodeMirrorFor(container, initialValue, onChange) {
@@ -146,8 +153,9 @@
       const taskId = shell.getAttribute("data-task-id");
       const problemId = shell.getAttribute("data-problem-id");
 
+      // ✅ надёжно читаем стартовый код
       const starterSource = shell.querySelector("[data-starter-source]");
-      const starter = starterSource ? (starterSource.value || "") : "";
+      const starter = normalizeText(starterSource ? starterSource.textContent : "");
 
       const cmHost = shell.querySelector("[data-cm-host]");
       const fallback = shell.querySelector("textarea[data-fallback]");
@@ -172,6 +180,7 @@
         editor = initFallbackTextarea(fallback, initial, onChange);
       }
 
+      // выставим статус по факту localStorage
       setSavedBadge(shell, saved !== null && String(saved).trim() !== "");
 
       const btnSave = shell.querySelector("[data-action='save']");
@@ -180,17 +189,20 @@
 
       if (btnSave) {
         btnSave.addEventListener("click", () => {
-          const value = editor.getValue();
+          const value = editor ? editor.getValue() : (fallback ? fallback.value : "");
           saveCode(taskId, problemId, value);
           setSavedBadge(shell, String(value).trim() !== "");
           window.psToast && window.psToast("Сохранено");
         });
       }
 
+      // ✅ фикс: reset всегда ставит именно starter
       if (btnReset) {
         btnReset.addEventListener("click", () => {
           clearCode(taskId, problemId);
-          editor.setValue(starter);
+          const next = starter;
+          if (editor) editor.setValue(next);
+          if (fallback) fallback.value = next;
           setSavedBadge(shell, false);
           window.psToast && window.psToast("Сброшено");
         });
@@ -198,7 +210,8 @@
 
       if (btnCopy) {
         btnCopy.addEventListener("click", async () => {
-          await copyText(editor.getValue());
+          const value = editor ? editor.getValue() : (fallback ? fallback.value : "");
+          await copyText(value);
         });
       }
     }

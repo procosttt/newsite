@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% set title = problem.title %}
+{% block content %}
+
+<section class="section">
+  <div class="container">
+    <div class="breadcrumbs reveal">
+      <a href="{{ url_for('home') }}">Главная</a>
+      <span>›</span>
+      <a href="{{ url_for('tasks_page') }}">Задания</a>
+      <span>›</span>
+      <a href="{{ url_for('task_detail', id=task.id) }}">№{{ task.id }}</a>
+      <span>›</span>
+      <span>{{ problem.title }}</span>
+    </div>
+
+    <div class="reveal" style="margin-top:14px;">
+      <div class="kicker">Решение • Практика</div>
+      <h1 class="section-title">{{ problem.title }}</h1>
+      <p class="section-subtitle" style="white-space: pre-line;">{{ problem.statement }}</p>
+    </div>
+
+    <hr class="hr reveal" />
+
+    <article class="card reveal">
+      <div style="display:flex; align-items:flex-start; justify-content:space-between; gap: 12px; flex-wrap: wrap;">
+        <div>
+          <h2 class="card-title" style="font-size:16px; margin-bottom:6px;">Редактор кода</h2>
+          <p class="card-text">Сохраняется в браузере. “Сбросить” возвращает стартовый шаблон.</p>
+        </div>
+        <span class="badge" data-saved-badge>…</span>
+      </div>
+
+      <div style="height:14px"></div>
+
+      <div
+        class="editor-shell"
+        data-editor-shell
+        data-task-id="{{ task.id }}"
+        data-problem-id="{{ problem.id }}"
+      >
+        <!-- стартовый код кладём текстом; JS прочитает textContent -->
+        <textarea data-starter-source style="display:none;">{{ starter }}</textarea>
+
+        <div class="editor-meta">
+          <div class="hint">Python • Таб = отступ • Сохранение в браузере</div>
+          <div class="badge">localStorage</div>
+        </div>
+
+        <div data-cm-host></div>
+        <textarea class="editor-fallback" data-fallback spellcheck="false"></textarea>
+
+        <div class="editor-actions">
+          <button class="btn btn-primary" type="button" data-action="save">Сохранить</button>
+          <button class="btn btn-danger" type="button" data-action="reset">Сбросить</button>
+          <button class="btn" type="button" data-action="copy">Копировать</button>
+        </div>
+      </div>
+    </article>
+
+    <div class="reveal" style="margin-top:18px; display:flex; gap:10px; flex-wrap:wrap;">
+      <a class="btn" href="{{ url_for('task_detail', id=task.id) }}">← К списку задач №{{ task.id }}</a>
+      <a class="btn btn-ghost" href="{{ url_for('tasks_page') }}">Все номера</a>
+    </div>
+  </div>
+</section>
+
+{% endblock %}

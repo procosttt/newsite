@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 from flask import Flask, abort, render_template
 
@@ -24,8 +24,8 @@ def index_by_id(items: List[Dict[str, Any]]) -> Dict[str, Dict[str, Any]]:
 
 def normalize_newlines(value: Any) -> Any:
     """
-    Делает данные устойчивыми к 'двойному экранированию' в JSON.
-    Если в строке встречается буквальное '\\n', превращаем в реальный перенос строки.
+    Делает данные устойчивыми к 'двойному экранированию' в JSON:
+    '\\n' -> '\n' во всех строковых полях.
     """
     if isinstance(value, str):
         return value.replace("\\n", "\n")
@@ -36,15 +36,18 @@ def normalize_newlines(value: Any) -> Any:
     return value
 
 
+def find_problem(task: Dict[str, Any], problem_id: str) -> Optional[Dict[str, Any]]:
+    for p in task.get("problems", []):
+        if str(p.get("id")) == str(problem_id):
+            return p
+    return None
+
+
 def create_app() -> Flask:
     app = Flask(__name__)
 
-    templates_data = load_json(DATA_DIR / "templates.json")
-    tasks_data = load_json(DATA_DIR / "tasks.json")
-
-    # Нормализуем переносы во всех полях (templates + tasks)
-    templates_data = normalize_newlines(templates_data)
-    tasks_data = normalize_newlines(tasks_data)
+    templates_data = normalize_newlines(load_json(DATA_DIR / "templates.json"))
+    tasks_data = normalize_newlines(load_json(DATA_DIR / "tasks.json"))
 
     templates_list: List[Dict[str, Any]] = templates_data.get("templates", [])
     tasks_list: List[Dict[str, Any]] = tasks_data.get("tasks", [])
@@ -87,6 +90,25 @@ def create_app() -> Flask:
         if not item:
             abort(404)
         return render_template("task_detail.html", item=item)
+
+    # ✅ НОВОЕ: отдельная страница для конкретной задачи (например /tasks/6/p1)
+    @app.get("/tasks/<task_id>/<problem_id>")
+    def problem_detail(task_id: str, problem_id: str):
+        task = tasks_map.get(str(task_id))
+        if not task:
+            abort(404)
+
+        problem = find_problem(task, problem_id)
+        if not problem:
+            abort(404)
+
+        starter = problem.get("starterCode") or task.get("defaultCode") or ""
+        return render_template(
+            "problem_detail.html",
+            task=task,
+            problem=problem,
+            starter=starter,
+        )
 
     @app.errorhandler(404)
     def not_found(_):
