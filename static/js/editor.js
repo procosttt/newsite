@@ -39,7 +39,6 @@
     localStorage.removeItem(makeKey(taskId, problemId));
   }
 
-  // ✅ бейдж “Сохранено/Не сохранено” может быть не внутри editor-shell — ищем ближе к карточке
   function setSavedBadge(shell, isSaved) {
     const card = shell.closest(".card") || shell.parentElement;
     const b = (card && card.querySelector("[data-saved-badge]")) || shell.querySelector("[data-saved-badge]");
@@ -50,8 +49,22 @@
   }
 
   function normalizeText(s) {
-    // нормализуем переносы + убираем возможный первый \n из-за форматирования шаблона
     return String(s || "").replace(/\r\n/g, "\n").replace(/^\n/, "");
+  }
+
+  // ✅ Tab в textarea: вставка 4 пробелов
+  function enableTextareaTab(textarea) {
+    textarea.addEventListener("keydown", (e) => {
+      if (e.key === "Tab") {
+        e.preventDefault();
+        const start = textarea.selectionStart;
+        const end = textarea.selectionEnd;
+        const insert = "    ";
+        const value = textarea.value;
+        textarea.value = value.slice(0, start) + insert + value.slice(end);
+        textarea.selectionStart = textarea.selectionEnd = start + insert.length;
+      }
+    });
   }
 
   async function initCodeMirrorFor(container, initialValue, onChange) {
@@ -109,6 +122,7 @@
       ".cm-cursor": { borderLeftColor: "var(--text)" },
     });
 
+    // ✅ indentWithTab ставим ПЕРВЫМ
     const startState = EditorState.create({
       doc: initialValue,
       extensions: [
@@ -126,23 +140,86 @@
 
     const view = new EditorView({ state: startState, parent: container });
 
+    // ✅ автофокус, чтобы Tab работал сразу
+    requestAnimationFrame(() => view.focus());
+
     return {
       getValue: () => view.state.doc.toString(),
       setValue: (v) => {
         view.dispatch({ changes: { from: 0, to: view.state.doc.length, insert: v } });
+        requestAnimationFrame(() => view.focus());
       },
+      focus: () => view.focus(),
       destroy: () => view.destroy(),
     };
   }
 
   function initFallbackTextarea(textarea, initialValue, onChange) {
     textarea.value = initialValue;
+    enableTextareaTab(textarea);
     textarea.addEventListener("input", () => onChange(textarea.value));
+    requestAnimationFrame(() => textarea.focus());
     return {
       getValue: () => textarea.value,
-      setValue: (v) => (textarea.value = v),
+      setValue: (v) => { textarea.value = v; requestAnimationFrame(() => textarea.focus()); },
+      focus: () => textarea.focus(),
       destroy: () => {},
     };
+  }
+
+  function renderRunResults(container, payload) {
+    const status = container.querySelector("[data-run-status]");
+    const resultsHost = container.querySelector("[data-run-results]");
+    if (!status || !resultsHost) return;
+
+    if (!payload || !payload.ok) {
+      status.textContent = payload?.error || "Ошибка проверки.";
+      resultsHost.innerHTML = "";
+      return;
+    }
+
+    status.textContent = payload.allPassed ? "✅ Все тесты пройдены" : "❌ Есть ошибки в тестах";
+
+    resultsHost.innerHTML = payload.results.map(r => {
+      const cls = r.passed ? "ok" : "warn";
+      const got = (r.stdout ?? "").toString();
+      const exp = (r.expected ?? "").toString();
+      const err = (r.stderr ?? "").toString();
+
+      return `
+        <div class="run-case ${cls}">
+          <div class="run-case-head">
+            <div class="badge ${cls}">Тест ${r.test}: ${r.passed ? "OK" : "FAIL"}</div>
+          </div>
+
+          <div class="run-cols">
+            <div>
+              <div class="run-label">Ввод</div>
+              <pre class="run-pre">${escapeHtml(r.input ?? "")}</pre>
+            </div>
+
+            <div>
+              <div class="run-label">Ожидаемый вывод</div>
+              <pre class="run-pre">${escapeHtml(exp)}</pre>
+            </div>
+
+            <div>
+              <div class="run-label">Твой вывод</div>
+              <pre class="run-pre">${escapeHtml(got)}</pre>
+            </div>
+          </div>
+
+          ${err.trim() ? `<div class="run-err"><div class="run-label">stderr / ошибка</div><pre class="run-pre">${escapeHtml(err)}</pre></div>` : ""}
+        </div>
+      `;
+    }).join("");
+  }
+
+  function escapeHtml(s) {
+    return String(s)
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;");
   }
 
   async function bootTaskEditors() {
@@ -153,7 +230,8 @@
       const taskId = shell.getAttribute("data-task-id");
       const problemId = shell.getAttribute("data-problem-id");
 
-      // ✅ надёжно читаем стартовый код
+      const startEmpty = shell.getAttribute("data-start-empty") === "1";
+
       const starterSource = shell.querySelector("[data-starter-source]");
       const starter = normalizeText(starterSource ? starterSource.textContent : "");
 
@@ -161,7 +239,9 @@
       const fallback = shell.querySelector("textarea[data-fallback]");
 
       const saved = loadSaved(taskId, problemId);
-      const initial = saved !== null ? saved : starter;
+
+      // ✅ важно: если startEmpty=1 и сохранённого кода нет — стартуем ПУСТЫМ
+      const initial = (saved !== null) ? saved : (startEmpty ? "" : starter);
 
       let editor;
       const onChange = () => {};
@@ -180,12 +260,12 @@
         editor = initFallbackTextarea(fallback, initial, onChange);
       }
 
-      // выставим статус по факту localStorage
       setSavedBadge(shell, saved !== null && String(saved).trim() !== "");
 
       const btnSave = shell.querySelector("[data-action='save']");
       const btnReset = shell.querySelector("[data-action='reset']");
       const btnCopy = shell.querySelector("[data-action='copy']");
+      const btnRun = shell.querySelector("[data-action='run']");
 
       if (btnSave) {
         btnSave.addEventListener("click", () => {
@@ -196,15 +276,14 @@
         });
       }
 
-      // ✅ фикс: reset всегда ставит именно starter
       if (btnReset) {
         btnReset.addEventListener("click", () => {
           clearCode(taskId, problemId);
-          const next = starter;
+          const next = starter; // ✅ сброс всегда на шаблон
           if (editor) editor.setValue(next);
           if (fallback) fallback.value = next;
           setSavedBadge(shell, false);
-          window.psToast && window.psToast("Сброшено");
+          window.psToast && window.psToast("Сброшено (шаблон)");
         });
       }
 
@@ -212,6 +291,29 @@
         btnCopy.addEventListener("click", async () => {
           const value = editor ? editor.getValue() : (fallback ? fallback.value : "");
           await copyText(value);
+        });
+      }
+
+      // ✅ Проверка
+      if (btnRun) {
+        const panel = shell.querySelector("[data-run-panel]");
+        btnRun.addEventListener("click", async () => {
+          if (!panel) return;
+          const status = panel.querySelector("[data-run-status]");
+          if (status) status.textContent = "⏳ Проверяю...";
+
+          const code = editor ? editor.getValue() : (fallback ? fallback.value : "");
+          try {
+            const res = await fetch("/api/run", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ taskId, problemId, code }),
+            });
+            const payload = await res.json().catch(() => ({}));
+            renderRunResults(panel, payload.ok ? payload : { ok: false, error: payload.error || "Ошибка API" });
+          } catch (e) {
+            renderRunResults(panel, { ok: false, error: "Не удалось обратиться к серверу проверки." });
+          }
         });
       }
     }

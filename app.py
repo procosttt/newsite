@@ -1,14 +1,25 @@
 from __future__ import annotations
 
 import json
+import os
+import sys
+import tempfile
+import subprocess
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from flask import Flask, abort, render_template
+from flask import Flask, abort, jsonify, render_template, request
 
 
 BASE_DIR = Path(__file__).resolve().parent
 DATA_DIR = BASE_DIR / "static" / "data"
+
+# ⚠️ Включай для ЛОКАЛЬНОЙ проверки. Для публичного деплоя лучше выключить.
+ENABLE_RUNNER = True
+
+# лимиты проверки
+RUN_TIMEOUT_SEC = 2.0
+MAX_OUTPUT_CHARS = 8000
 
 
 def load_json(path: Path) -> Any:
@@ -41,6 +52,51 @@ def find_problem(task: Dict[str, Any], problem_id: str) -> Optional[Dict[str, An
         if str(p.get("id")) == str(problem_id):
             return p
     return None
+
+
+def run_python_code(code: str, stdin_data: str) -> Dict[str, Any]:
+    """
+    Запускает python-код в отдельном процессе.
+    ⚠️ Это НЕ песочница. Для публичного деплоя небезопасно.
+    """
+    with tempfile.TemporaryDirectory() as td:
+        td_path = Path(td)
+        file_path = td_path / "main.py"
+        file_path.write_text(code, encoding="utf-8")
+
+        try:
+            # -I: изолированный режим (минимум влияния окружения)
+            # env: минимальный
+            env = {"PYTHONIOENCODING": "utf-8"}
+            proc = subprocess.run(
+                [sys.executable, "-I", str(file_path)],
+                input=stdin_data,
+                text=True,
+                capture_output=True,
+                timeout=RUN_TIMEOUT_SEC,
+                cwd=td,
+                env=env,
+            )
+            out = (proc.stdout or "")
+            err = (proc.stderr or "")
+
+            # ограничим вывод
+            out = out[:MAX_OUTPUT_CHARS]
+            err = err[:MAX_OUTPUT_CHARS]
+
+            return {
+                "ok": proc.returncode == 0,
+                "stdout": out,
+                "stderr": err,
+                "returncode": proc.returncode,
+            }
+        except subprocess.TimeoutExpired:
+            return {
+                "ok": False,
+                "stdout": "",
+                "stderr": f"Timeout: код выполнялся дольше {RUN_TIMEOUT_SEC} сек.",
+                "returncode": -1,
+            }
 
 
 def create_app() -> Flask:
@@ -91,7 +147,7 @@ def create_app() -> Flask:
             abort(404)
         return render_template("task_detail.html", item=item)
 
-    # ✅ НОВОЕ: отдельная страница для конкретной задачи (например /tasks/6/p1)
+    # отдельная страница задачи: /tasks/6/p1
     @app.get("/tasks/<task_id>/<problem_id>")
     def problem_detail(task_id: str, problem_id: str):
         task = tasks_map.get(str(task_id))
@@ -103,12 +159,68 @@ def create_app() -> Flask:
             abort(404)
 
         starter = problem.get("starterCode") or task.get("defaultCode") or ""
+        tests = problem.get("tests") or []  # [{input, expected}...]
+
         return render_template(
             "problem_detail.html",
             task=task,
             problem=problem,
             starter=starter,
+            tests=tests,
+            runner_enabled=ENABLE_RUNNER,
         )
+
+    # ✅ API: проверка решения на тестах
+    @app.post("/api/run")
+    def api_run():
+        if not ENABLE_RUNNER:
+            return jsonify({"ok": False, "error": "Runner disabled"}), 403
+
+        data = request.get_json(silent=True) or {}
+        task_id = str(data.get("taskId", "")).strip()
+        problem_id = str(data.get("problemId", "")).strip()
+        code = str(data.get("code", ""))
+
+        task = tasks_map.get(task_id)
+        if not task:
+            return jsonify({"ok": False, "error": "Task not found"}), 404
+        problem = find_problem(task, problem_id)
+        if not problem:
+            return jsonify({"ok": False, "error": "Problem not found"}), 404
+
+        tests = problem.get("tests") or []
+        if not tests:
+            return jsonify({"ok": False, "error": "No tests configured"}), 400
+
+        results = []
+        all_passed = True
+
+        for idx, t in enumerate(tests, start=1):
+            inp = str(t.get("input", ""))
+            exp = str(t.get("expected", ""))
+
+            run_res = run_python_code(code, inp)
+            got = (run_res.get("stdout") or "")
+            err = (run_res.get("stderr") or "")
+
+            # сравнение — по trim пробелам/переносам по краям
+            got_norm = got.strip()
+            exp_norm = exp.strip()
+
+            passed = run_res.get("ok", False) and (got_norm == exp_norm)
+            if not passed:
+                all_passed = False
+
+            results.append({
+                "test": idx,
+                "input": inp,
+                "expected": exp,
+                "stdout": got,
+                "stderr": err,
+                "passed": passed,
+            })
+
+        return jsonify({"ok": True, "allPassed": all_passed, "results": results})
 
     @app.errorhandler(404)
     def not_found(_):

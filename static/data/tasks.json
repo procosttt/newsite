@@ -2,79 +2,123 @@
   "tasks": [
     {
       "id": 6,
-      "title": "Задание №6 — Строки",
       "intro": "Тренировка базовой обработки строк: подсчёт, поиск, фильтрация символов. В ЕГЭ важно аккуратно читать условие и не путать «индекс» и «количество».",
-      "defaultCode": "s = input().strip()\\n\\n# TODO\\nprint()\\n",
+      "defaultCode": "s = input().strip()\n\n# TODO: реши задачу\nprint(0)\n",
       "problems": [
         {
           "id": "p1",
           "title": "6.1 — Сколько раз встречается подстрока",
-          "statement": "Ввод: строка s.\\nВыведите, сколько раз в строке встречается подстрока 'aba' (пересечения допускаются).\\n\\nПример: 'ababa' → 2 (позиции 0..2 и 2..4).",
-          "starterCode": "s = input().strip()\\n\\nsub = 'aba'\\nans = 0\\nfor i in range(0, len(s) - len(sub) + 1):\\n    if s[i:i+len(sub)] == sub:\\n        ans += 1\\nprint(ans)\\n"
+          "statement": "Ввод: строка s.\nВыведите, сколько раз в строке встречается подстрока 'aba' (пересечения допускаются).\n\nПример: 'ababa' → 2 (позиции 0..2 и 2..4).",
+          "starterCode": "s = input().strip()\nsub = 'aba'\nans = 0\nfor i in range(0, len(s) - len(sub) + 1):\n    if s[i:i+len(sub)] == sub:\n        ans += 1\nprint(ans)\n",
+          "tests": [
+            { "input": "ababa\n", "expected": "2\n" },
+            { "input": "aaaaa\n", "expected": "0\n" },
+            { "input": "abaaba\n", "expected": "2\n" }
+          ]
         },
         {
           "id": "p2",
-          "title": "6.2 — Первый и последний индекс",
-          "statement": "Ввод: строка s.\\nЕсли символ 'x' встречается в строке, выведите два числа: индекс первого и индекс последнего вхождения 'x'.\\nЕсли 'x' не встречается — выведите -1.",
-          "starterCode": "s = input().strip()\\n\\nif 'x' not in s:\\n    print(-1)\\nelse:\\n    print(s.find('x'), s.rfind('x'))\\n"
+          "title": "6.2 — Удалить лишние пробелы",
+          "statement": "Ввод: строка s.\nЗамените подряд идущие пробелы на один пробел, уберите пробелы по краям.\n\nПример: '  a   b   c  ' → 'a b c'",
+          "starterCode": "s = input()\n# 1) убрать пробелы по краям\ns = s.strip()\n# 2) пока встречаются двойные пробелы — сжимаем\nwhile '  ' in s:\n    s = s.replace('  ', ' ')\nprint(s)\n",
+          "tests": [
+            { "input": "  a   b   c  \n", "expected": "a b c\n" },
+            { "input": "hello\n", "expected": "hello\n" },
+            { "input": "   x      y\n", "expected": "x y\n" }
+          ]
         },
         {
           "id": "p3",
-          "title": "6.3 — Фильтрация (оставить только цифры)",
-          "statement": "Ввод: строка s.\\nВыведите строку, состоящую только из цифр исходной строки (в том же порядке).\\nЕсли цифр нет — выведите пустую строку.",
-          "starterCode": "s = input()\\n\\nout = []\\nfor ch in s:\\n    if ch.isdigit():\\n        out.append(ch)\\nprint(''.join(out))\\n"
+          "title": "6.3 — Подсчитать цифры в строке",
+          "statement": "Ввод: строка s.\nВыведите количество символов-цифр в строке.\n\nПример: 'a1b22c' → 3",
+          "starterCode": "s = input()\nans = 0\nfor ch in s:\n    if ch.isdigit():\n        ans += 1\nprint(ans)\n",
+          "tests": [
+            { "input": "a1b22c\n", "expected": "3\n" },
+            { "input": "no_digits\n", "expected": "0\n" },
+            { "input": "2025!\n", "expected": "4\n" }
+          ]
         }
       ]
     },
+
     {
-      "id": 14,
-      "title": "Задание №14 — Числа и цифры",
-      "intro": "Задачи на цифры числа: сумма/произведение, свойства, количество цифр. Почти всегда можно решить через str(abs(n)) и генераторы.",
-      "defaultCode": "n = int(input())\\n\\n# TODO\\nprint()\\n",
+      "id": 8,
+      "intro": "Циклы и арифметика: перебор, условия, подсчёты. Здесь важно аккуратно работать с границами и проверкой условий.",
+      "defaultCode": "n = int(input())\n\n# TODO: реши задачу\nprint(0)\n",
       "problems": [
         {
           "id": "p1",
-          "title": "14.1 — Сумма цифр",
-          "statement": "Ввод: целое число n.\\nВыведите сумму его цифр.\\nУчитывайте, что n может быть отрицательным.",
-          "starterCode": "n = int(input())\\n\\nprint(sum(map(int, str(abs(n)))))\\n"
+          "title": "8.1 — Сумма цифр числа",
+          "statement": "Ввод: целое число n (n ≥ 0).\nВыведите сумму его цифр.\n\nПример: 10502 → 8",
+          "starterCode": "n = int(input())\nans = 0\nwhile n > 0:\n    ans += n % 10\n    n //= 10\nprint(ans)\n",
+          "tests": [
+            { "input": "10502\n", "expected": "8\n" },
+            { "input": "0\n", "expected": "0\n" },
+            { "input": "999\n", "expected": "27\n" }
+          ]
         },
         {
           "id": "p2",
-          "title": "14.2 — Количество цифр, кратных 3",
-          "statement": "Ввод: целое число n.\\nВыведите количество цифр в десятичной записи числа, которые кратны 3 (0 тоже кратно 3).",
-          "starterCode": "n = int(input())\\n\\ndigits = map(int, str(abs(n)))\\nans = sum(1 for d in digits if d % 3 == 0)\\nprint(ans)\\n"
+          "title": "8.2 — Количество делителей",
+          "statement": "Ввод: целое число n (n ≥ 1).\nВыведите количество его делителей.\n\nПример: 12 → 6",
+          "starterCode": "n = int(input())\nans = 0\nfor d in range(1, n + 1):\n    if n % d == 0:\n        ans += 1\nprint(ans)\n",
+          "tests": [
+            { "input": "12\n", "expected": "6\n" },
+            { "input": "1\n", "expected": "1\n" },
+            { "input": "17\n", "expected": "2\n" }
+          ]
         },
         {
           "id": "p3",
-          "title": "14.3 — Проверка: все цифры разные",
-          "statement": "Ввод: целое число n.\\nВыведите YES, если все цифры в его десятичной записи различны, иначе NO.\\nПример: 1203 → YES, 202 → NO.",
-          "starterCode": "n = int(input())\\n\\ns = str(abs(n))\\nprint('YES' if len(set(s)) == len(s) else 'NO')\\n"
+          "title": "8.3 — Максимальная цифра",
+          "statement": "Ввод: целое число n (n ≥ 0).\nВыведите максимальную цифру в его записи.\n\nПример: 50729 → 9",
+          "starterCode": "n = int(input())\nif n == 0:\n    print(0)\nelse:\n    mx = 0\n    while n > 0:\n        mx = max(mx, n % 10)\n        n //= 10\n    print(mx)\n",
+          "tests": [
+            { "input": "50729\n", "expected": "9\n" },
+            { "input": "0\n", "expected": "0\n" },
+            { "input": "1111\n", "expected": "1\n" }
+          ]
         }
       ]
     },
+
     {
-      "id": 23,
-      "title": "Задание №23 — Динамика (демо)",
-      "intro": "Мини-набор на dp: количество программ (способов) и минимальные шаги. Отлично тренирует формулировку dp-смысла и переходов.",
-      "defaultCode": "target = int(input())\\n\\n# TODO\\nprint()\\n",
+      "id": 17,
+      "intro": "Списки и последовательности: фильтрация, подсчёт, поиск экстремумов. Важно аккуратно читать формат ввода и вывода.",
+      "defaultCode": "n = int(input())\na = list(map(int, input().split()))\n\n# TODO: реши задачу\nprint(0)\n",
       "problems": [
         {
           "id": "p1",
-          "title": "23.1 — Количество программ (+1, +2)",
-          "statement": "Ввод: целое target (0 ≤ target ≤ 1000).\\nИз 0 нужно попасть в target. За один шаг можно прибавить 1 или 2.\\nВыведите количество различных программ (способов).",
-          "starterCode": "target = int(input())\\n\\ndp = [0] * (target + 1)\\ndp[0] = 1\\nfor i in range(1, target + 1):\\n    dp[i] = dp[i - 1]\\n    if i - 2 >= 0:\\n        dp[i] += dp[i - 2]\\nprint(dp[target])\\n"
+          "title": "17.1 — Количество положительных",
+          "statement": "Ввод: n, затем n целых чисел.\nВыведите количество положительных чисел.\n\nПример:\n5\n-1 0 2 3 -5\n→ 2",
+          "starterCode": "n = int(input())\na = list(map(int, input().split()))\nans = 0\nfor x in a:\n    if x > 0:\n        ans += 1\nprint(ans)\n",
+          "tests": [
+            { "input": "5\n-1 0 2 3 -5\n", "expected": "2\n" },
+            { "input": "3\n0 0 0\n", "expected": "0\n" },
+            { "input": "4\n1 2 3 4\n", "expected": "4\n" }
+          ]
         },
         {
           "id": "p2",
-          "title": "23.2 — Количество программ (+1, *2) из 1",
-          "statement": "Ввод: целое target (1 ≤ target ≤ 10^5).\\nИз 1 нужно попасть в target. За шаг можно: прибавить 1 или умножить на 2 (не превышая target).\\nВыведите количество программ.",
-          "starterCode": "target = int(input())\\n\\ndp = [0] * (target + 1)\\ndp[1] = 1\\nfor x in range(1, target + 1):\\n    if dp[x] == 0:\\n        continue\\n    if x + 1 <= target:\\n        dp[x + 1] += dp[x]\\n    if x * 2 <= target:\\n        dp[x * 2] += dp[x]\\nprint(dp[target])\\n"
+          "title": "17.2 — Максимум на чётных позициях",
+          "statement": "Ввод: n, затем n целых чисел.\nНайдите максимум среди элементов на чётных позициях (позиции 0,2,4,...).\n\nПример:\n6\n5 1 9 2 7 3\n→ 9",
+          "starterCode": "n = int(input())\na = list(map(int, input().split()))\nmx = a[0]\nfor i in range(0, n, 2):\n    if a[i] > mx:\n        mx = a[i]\nprint(mx)\n",
+          "tests": [
+            { "input": "6\n5 1 9 2 7 3\n", "expected": "9\n" },
+            { "input": "1\n-10\n", "expected": "-10\n" },
+            { "input": "5\n1 100 2 100 3\n", "expected": "3\n" }
+          ]
         },
         {
           "id": "p3",
-          "title": "23.3 — Минимум шагов (+1, +3)",
-          "statement": "Ввод: целое target (0 ≤ target ≤ 10^5).\\nИз 0 попасть в target, за шаг можно прибавить 1 или 3.\\nВыведите минимальное число шагов.",
-          "starterCode": "target = int(input())\\n\\nINF = 10**9\\ndp = [INF] * (target + 1)\\ndp[0] = 0\\nfor i in range(1, target + 1):\\n    dp[i] = min(dp[i], dp[i - 1] + 1)\\n    if i - 3 >= 0:\\n        dp[i] = min(dp[i], dp[i - 3] + 1)\\nprint(dp[target])\\n"
+          "title": "17.3 — Сумма элементов, кратных 3",
+          "statement": "Ввод: n, затем n целых чисел.\nВыведите сумму элементов, которые делятся на 3.\n\nПример:\n6\n3 1 6 2 7 9\n→ 18",
+          "starterCode": "n = int(input())\na = list(map(int, input().split()))\nans = 0\nfor x in a:\n    if x % 3 == 0:\n        ans += x\nprint(ans)\n",
+          "tests": [
+            { "input": "6\n3 1 6 2 7 9\n", "expected": "18\n" },
+            { "input": "4\n1 2 4 5\n", "expected": "0\n" },
+            { "input": "5\n-3 3 0 1 2\n", "expected": "0\n" }
+          ]
         }
       ]
     }

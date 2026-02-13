@@ -26,7 +26,7 @@
       <div style="display:flex; align-items:flex-start; justify-content:space-between; gap: 12px; flex-wrap: wrap;">
         <div>
           <h2 class="card-title" style="font-size:16px; margin-bottom:6px;">Редактор кода</h2>
-          <p class="card-text">Сохраняется в браузере. “Сбросить” возвращает стартовый шаблон.</p>
+          <p class="card-text">По умолчанию редактор пустой. “Сбросить” вернёт стартовый шаблон.</p>
         </div>
         <span class="badge" data-saved-badge>…</span>
       </div>
@@ -38,12 +38,12 @@
         data-editor-shell
         data-task-id="{{ task.id }}"
         data-problem-id="{{ problem.id }}"
+        data-start-empty="1"
       >
-        <!-- стартовый код кладём текстом; JS прочитает textContent -->
         <textarea data-starter-source style="display:none;">{{ starter }}</textarea>
 
         <div class="editor-meta">
-          <div class="hint">Python • Таб = отступ • Сохранение в браузере</div>
+          <div class="hint">Python • Tab = отступ • Сохранение в браузере</div>
           <div class="badge">localStorage</div>
         </div>
 
@@ -54,7 +54,29 @@
           <button class="btn btn-primary" type="button" data-action="save">Сохранить</button>
           <button class="btn btn-danger" type="button" data-action="reset">Сбросить</button>
           <button class="btn" type="button" data-action="copy">Копировать</button>
+
+          {% if runner_enabled %}
+            <button class="btn btn-ghost" type="button" data-action="run">Проверить</button>
+          {% endif %}
         </div>
+
+        {% if runner_enabled %}
+          <div class="run-panel" data-run-panel>
+            <div class="run-head">
+              <div class="badge">Проверка по тестам</div>
+              <div class="hint">Сравнение stdout с ожидаемым выводом</div>
+            </div>
+            <div class="run-body">
+              <div class="run-status" data-run-status>Нажми “Проверить”, чтобы запустить тесты.</div>
+              <div class="run-results" data-run-results></div>
+            </div>
+
+            <!-- тесты пробрасываем в JSON в data-атрибуте безопасно -->
+            <script type="application/json" data-tests-json>
+              {{ tests | tojson }}
+            </script>
+          </div>
+        {% endif %}
       </div>
     </article>
 
