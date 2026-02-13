@@ -26,12 +26,15 @@
   function makeKey(taskId, problemId) {
     return `${LS_PREFIX}${taskId}_${problemId}`;
   }
+
   function loadSaved(taskId, problemId) {
     return localStorage.getItem(makeKey(taskId, problemId));
   }
+
   function saveCode(taskId, problemId, code) {
     localStorage.setItem(makeKey(taskId, problemId), code);
   }
+
   function clearCode(taskId, problemId) {
     localStorage.removeItem(makeKey(taskId, problemId));
   }
@@ -49,7 +52,7 @@
     return String(s || "").replace(/\r\n/g, "\n").replace(/^\n/, "");
   }
 
-  // Tab для textarea: вставка 4 пробелов
+  // ✅ Tab в textarea: вставка 4 пробелов
   function enableTextareaTab(textarea) {
     textarea.addEventListener("keydown", (e) => {
       if (e.key === "Tab") {
@@ -86,18 +89,25 @@
     const { syntaxHighlighting, defaultHighlightStyle } = cmLangHighlight;
 
     const updateListener = EditorView.updateListener.of((update) => {
-      if (update.docChanged) onChange(update.state.doc.toString());
+      if (update.docChanged) {
+        const value = update.state.doc.toString();
+        onChange(value);
+      }
     });
 
     const theme = EditorView.theme({
-      "&": { backgroundColor: "transparent", color: "var(--text)", fontSize: "14px" },
+      "&": { backgroundColor: "transparent", color: "var(--text)", fontSize: "13px" },
       ".cm-gutters": {
         backgroundColor: "transparent",
         borderRight: "1px solid var(--border)",
         color: "var(--muted)",
       },
+      ".cm-activeLineGutter": {
+        backgroundColor: "color-mix(in srgb, var(--bg-elev), transparent 70%)",
+        color: "var(--text)",
+      },
       ".cm-content": {
-        padding: "14px",
+        padding: "12px",
         fontFamily:
           'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
       },
@@ -106,12 +116,13 @@
           'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
       },
       ".cm-activeLine": {
-        backgroundColor: "color-mix(in srgb, var(--bg-elev), transparent 82%)",
+        backgroundColor: "color-mix(in srgb, var(--bg-elev), transparent 80%)",
       },
       ".cm-selectionBackground": { backgroundColor: "rgba(79,70,229,.20)" },
       ".cm-cursor": { borderLeftColor: "var(--text)" },
     });
 
+    // ✅ indentWithTab ставим ПЕРВЫМ
     const startState = EditorState.create({
       doc: initialValue,
       extensions: [
@@ -128,6 +139,8 @@
     });
 
     const view = new EditorView({ state: startState, parent: container });
+
+    // ✅ автофокус, чтобы Tab работал сразу
     requestAnimationFrame(() => view.focus());
 
     return {
@@ -148,27 +161,75 @@
     requestAnimationFrame(() => textarea.focus());
     return {
       getValue: () => textarea.value,
-      setValue: (v) => {
-        textarea.value = v;
-        requestAnimationFrame(() => textarea.focus());
-      },
+      setValue: (v) => { textarea.value = v; requestAnimationFrame(() => textarea.focus()); },
       focus: () => textarea.focus(),
       destroy: () => {},
     };
   }
 
-  function toggleFullscreen(shell, on) {
-    shell.classList.toggle("is-fullscreen", on);
-    document.body.classList.toggle("no-scroll", on);
+  function renderRunResults(container, payload) {
+    const status = container.querySelector("[data-run-status]");
+    const resultsHost = container.querySelector("[data-run-results]");
+    if (!status || !resultsHost) return;
+
+    if (!payload || !payload.ok) {
+      status.textContent = payload?.error || "Ошибка проверки.";
+      resultsHost.innerHTML = "";
+      return;
+    }
+
+    status.textContent = payload.allPassed ? "✅ Все тесты пройдены" : "❌ Есть ошибки в тестах";
+
+    resultsHost.innerHTML = payload.results.map(r => {
+      const cls = r.passed ? "ok" : "warn";
+      const got = (r.stdout ?? "").toString();
+      const exp = (r.expected ?? "").toString();
+      const err = (r.stderr ?? "").toString();
+
+      return `
+        <div class="run-case ${cls}">
+          <div class="run-case-head">
+            <div class="badge ${cls}">Тест ${r.test}: ${r.passed ? "OK" : "FAIL"}</div>
+          </div>
+
+          <div class="run-cols">
+            <div>
+              <div class="run-label">Ввод</div>
+              <pre class="run-pre">${escapeHtml(r.input ?? "")}</pre>
+            </div>
+
+            <div>
+              <div class="run-label">Ожидаемый вывод</div>
+              <pre class="run-pre">${escapeHtml(exp)}</pre>
+            </div>
+
+            <div>
+              <div class="run-label">Твой вывод</div>
+              <pre class="run-pre">${escapeHtml(got)}</pre>
+            </div>
+          </div>
+
+          ${err.trim() ? `<div class="run-err"><div class="run-label">stderr / ошибка</div><pre class="run-pre">${escapeHtml(err)}</pre></div>` : ""}
+        </div>
+      `;
+    }).join("");
   }
 
-  async function bootEditors() {
+  function escapeHtml(s) {
+    return String(s)
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;");
+  }
+
+  async function bootTaskEditors() {
     const shells = document.querySelectorAll("[data-editor-shell]");
-    if (!shells.length) return;
+    if (shells.length === 0) return;
 
     for (const shell of shells) {
       const taskId = shell.getAttribute("data-task-id");
       const problemId = shell.getAttribute("data-problem-id");
+
       const startEmpty = shell.getAttribute("data-start-empty") === "1";
 
       const starterSource = shell.querySelector("[data-starter-source]");
@@ -178,9 +239,11 @@
       const fallback = shell.querySelector("textarea[data-fallback]");
 
       const saved = loadSaved(taskId, problemId);
-      const initial = saved !== null ? saved : (startEmpty ? "" : starter);
 
-      let editor = null;
+      // ✅ важно: если startEmpty=1 и сохранённого кода нет — стартуем ПУСТЫМ
+      const initial = (saved !== null) ? saved : (startEmpty ? "" : starter);
+
+      let editor;
       const onChange = () => {};
 
       if (cmHost) {
@@ -202,18 +265,11 @@
       const btnSave = shell.querySelector("[data-action='save']");
       const btnReset = shell.querySelector("[data-action='reset']");
       const btnCopy = shell.querySelector("[data-action='copy']");
-      const btnFull = shell.querySelector("[data-action='fullscreen']");
-      const btnExitFull = shell.querySelector("[data-action='exit-fullscreen']");
-
-      const getValue = () => (editor ? editor.getValue() : (fallback ? fallback.value : ""));
-      const setValue = (v) => {
-        if (editor) editor.setValue(v);
-        if (fallback) fallback.value = v;
-      };
+      const btnRun = shell.querySelector("[data-action='run']");
 
       if (btnSave) {
         btnSave.addEventListener("click", () => {
-          const value = getValue();
+          const value = editor ? editor.getValue() : (fallback ? fallback.value : "");
           saveCode(taskId, problemId, value);
           setSavedBadge(shell, String(value).trim() !== "");
           window.psToast && window.psToast("Сохранено");
@@ -223,7 +279,9 @@
       if (btnReset) {
         btnReset.addEventListener("click", () => {
           clearCode(taskId, problemId);
-          setValue(starter); // сброс на шаблон
+          const next = starter; // ✅ сброс всегда на шаблон
+          if (editor) editor.setValue(next);
+          if (fallback) fallback.value = next;
           setSavedBadge(shell, false);
           window.psToast && window.psToast("Сброшено (шаблон)");
         });
@@ -231,30 +289,33 @@
 
       if (btnCopy) {
         btnCopy.addEventListener("click", async () => {
-          await copyText(getValue());
+          const value = editor ? editor.getValue() : (fallback ? fallback.value : "");
+          await copyText(value);
         });
       }
 
-      // Fullscreen UX for mobile
-      if (btnFull) {
-        btnFull.addEventListener("click", () => {
-          toggleFullscreen(shell, true);
-          setTimeout(() => editor && editor.focus(), 30);
-        });
-      }
-      if (btnExitFull) {
-        btnExitFull.addEventListener("click", () => {
-          toggleFullscreen(shell, false);
-          setTimeout(() => editor && editor.focus(), 30);
-        });
-      }
+      // ✅ Проверка
+      if (btnRun) {
+        const panel = shell.querySelector("[data-run-panel]");
+        btnRun.addEventListener("click", async () => {
+          if (!panel) return;
+          const status = panel.querySelector("[data-run-status]");
+          if (status) status.textContent = "⏳ Проверяю...";
 
-      // Escape to exit fullscreen
-      document.addEventListener("keydown", (e) => {
-        if (e.key === "Escape" && shell.classList.contains("is-fullscreen")) {
-          toggleFullscreen(shell, false);
-        }
-      });
+          const code = editor ? editor.getValue() : (fallback ? fallback.value : "");
+          try {
+            const res = await fetch("/api/run", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ taskId, problemId, code }),
+            });
+            const payload = await res.json().catch(() => ({}));
+            renderRunResults(panel, payload.ok ? payload : { ok: false, error: payload.error || "Ошибка API" });
+          } catch (e) {
+            renderRunResults(panel, { ok: false, error: "Не удалось обратиться к серверу проверки." });
+          }
+        });
+      }
     }
   }
 
@@ -264,12 +325,13 @@
     if (!btn || !codeEl) return;
 
     btn.addEventListener("click", async () => {
-      await copyText(codeEl.textContent || "");
+      const text = codeEl.textContent || "";
+      await copyText(text);
     });
   }
 
   document.addEventListener("DOMContentLoaded", () => {
     bootTemplateCopy();
-    bootEditors();
+    bootTaskEditors();
   });
 })();
